@@ -2,6 +2,10 @@
 
 An autonomous AI agent that learns from your Twitter/X activity and manages your social presence.
 
+> **🚀 Quick Start**: See [QUICK_START.md](QUICK_START.md) for a fast introduction and testing guide!
+> 
+> **✅ System Status**: All components working! Tweet generation tested and operational.
+
 ## Features
 
 - 🤖 **Fully Autonomous**: Automatically posts, engages, and manages your Twitter presence
@@ -52,12 +56,26 @@ npm run dev
 # AI Engine (in another terminal)
 cd ai-engine
 pip install -r requirements.txt
-python -m src.main
+uvicorn src.main:app --host 0.0.0.0 --port 5001 --reload
 ```
 
 ## Configuration
 
 See `.env.example` for all configuration options.
+
+### Twitter API Free Tier
+
+If you're using Twitter's free tier, be aware of these limitations:
+- **Very limited API calls** (as low as 1-10 requests per day)
+- **Rate limits reset every 24 hours**
+- The agent will automatically respect rate limits and retry when limits reset
+- Consider upgrading to Basic ($100/month) or Pro tier for full functionality
+
+To optimize for free tier:
+1. Set `MAX_TWEETS_PER_DAY=1` in `.env`
+2. Set `MAX_ENGAGEMENTS_PER_HOUR=1` in `.env`
+3. Disable auto-features: `ENABLE_AUTO_TWEET=false`, `ENABLE_AUTO_REPLY=false`
+4. Use `AGENT_MODE=learning-only` to just analyze without posting
 
 ## Project Structure
 

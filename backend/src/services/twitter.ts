@@ -1,14 +1,15 @@
-import { TwitterApi, TweetV2, UserV2 } from 'twitter-api-v2';
+import { TwitterApi, TweetV2, UserV2, ApiResponseError } from 'twitter-api-v2';
 import { config } from '../config';
 import { twitterLogger } from '../utils/logger';
 import { db } from '../database/client';
+import { rateLimiter } from '../utils/rate-limiter';
 
 export interface TweetMetrics {
   retweet_count: number;
   reply_count: number;
   like_count: number;
   quote_count: number;
-  impression_count?: number;
+  impression_count: number;
 }
 
 export interface ExtendedTweetV2 extends TweetV2 {
@@ -33,6 +34,41 @@ class TwitterClient {
     this.readOnlyClient = new TwitterApi(config.twitter.bearerToken);
 
     twitterLogger.info('Twitter client initialized');
+  }
+
+  /**
+   * Wrapper to handle rate limits and errors
+   */
+  private async handleRateLimit<T>(
+    endpoint: string,
+    operation: () => Promise<T>
+  ): Promise<T> {
+    // Check if we can make the request
+    if (!rateLimiter.canMakeRequest(endpoint)) {
+      const waitTime = rateLimiter.getTimeUntilReset(endpoint);
+      twitterLogger.warn('Rate limit active, skipping request', {
+        endpoint,
+        resetIn: Math.ceil(waitTime),
+      });
+      throw new Error(`Rate limit exceeded. Resets in ${Math.ceil(waitTime)}s`);
+    }
+
+    try {
+      const result = await operation();
+      return result;
+    } catch (error: any) {
+      // Handle rate limit errors
+      if (error?.code === 429 || error?.rateLimit) {
+        const headers = error?.headers || {};
+        rateLimiter.updateFromHeaders(endpoint, headers);
+        
+        twitterLogger.error('Rate limit exceeded', {
+          endpoint,
+          rateLimit: error?.rateLimit,
+        });
+      }
+      throw error;
+    }
   }
 
   async initialize(): Promise<void> {
@@ -246,7 +282,9 @@ class TwitterClient {
         max_results: maxResults,
       });
 
-      return followers.data.data;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data = (followers as any).data;
+      return Array.isArray(data) ? data : data?.data || [];
     } catch (error) {
       twitterLogger.error('Failed to fetch followers', { error });
       throw error;
@@ -259,7 +297,9 @@ class TwitterClient {
         max_results: maxResults,
       });
 
-      return following.data.data;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data = (following as any).data;
+      return Array.isArray(data) ? data : data?.data || [];
     } catch (error) {
       twitterLogger.error('Failed to fetch following', { error });
       throw error;

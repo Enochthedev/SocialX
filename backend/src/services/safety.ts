@@ -182,7 +182,7 @@ class SafetyService {
     }
   }
 
-  async shouldEngageWithUser(userId: string, username: string): Promise<boolean> {
+  async shouldEngageWithUser(_userId: string, _username: string): Promise<boolean> {
     // Check if user is blocked or on a blacklist
     // This is a placeholder - implement your own logic
 

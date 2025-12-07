@@ -11,7 +11,7 @@ const app = express();
 app.use(express.json());
 
 // Health check endpoint
-app.get('/health', async (req, res) => {
+app.get('/health', async (_req, res) => {
   const dbHealthy = await db.healthCheck();
   const twitterHealthy = await twitterClient.healthCheck();
   const vectorDBHealthy = await vectorDBService.healthCheck();
@@ -30,7 +30,7 @@ app.get('/health', async (req, res) => {
 });
 
 // Status endpoint
-app.get('/status', async (req, res) => {
+app.get('/status', async (_req, res) => {
   try {
     const status = await agentService.getStatus();
     res.json(status);
@@ -46,7 +46,8 @@ app.post('/tweet', async (req, res) => {
     const { text } = req.body;
 
     if (!text) {
-      return res.status(400).json({ error: 'Text is required' });
+      res.status(400).json({ error: 'Text is required' });
+      return;
     }
 
     await agentService.postTweet(text);
@@ -58,12 +59,13 @@ app.post('/tweet', async (req, res) => {
 });
 
 // Generate tweet endpoint
-app.post('/generate-tweet', async (req, res) => {
+app.post('/generate-tweet', async (_req, res) => {
   try {
-    const tweet = await agentService.generateTweet();
+    const tweet = await agentService.generateTweet(true); // Force generation for manual API calls
 
     if (!tweet) {
-      return res.status(400).json({ error: 'Failed to generate tweet' });
+      res.status(400).json({ error: 'Failed to generate tweet' });
+      return;
     }
 
     res.json({ tweet });
@@ -74,7 +76,7 @@ app.post('/generate-tweet', async (req, res) => {
 });
 
 // Get agent metrics
-app.get('/metrics', async (req, res) => {
+app.get('/metrics', async (_req, res) => {
   try {
     const result = await db.query(
       `SELECT

@@ -38,8 +38,9 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     class Config:
-        env_file = ".env"
+        env_file = "../.env"
         case_sensitive = False
+        extra = "ignore"
 
     @property
     def database_url(self) -> str:
