@@ -47,7 +47,7 @@ class VectorDBService {
       await this.collection.add({
         ids: [memory.id],
         documents: [memory.content],
-        metadatas: [memory.metadata],
+        metadatas: [memory.metadata as Record<string, string | number | boolean>],
         embeddings: memory.embedding ? [memory.embedding] : undefined,
       });
 
@@ -67,7 +67,7 @@ class VectorDBService {
       await this.collection.add({
         ids: memories.map(m => m.id),
         documents: memories.map(m => m.content),
-        metadatas: memories.map(m => m.metadata),
+        metadatas: memories.map(m => m.metadata as Record<string, string | number | boolean>),
         embeddings: memories[0].embedding ? memories.map(m => m.embedding!) : undefined,
       });
 
@@ -164,7 +164,7 @@ class VectorDBService {
       await this.collection.update({
         ids: [id],
         documents: [content],
-        metadatas: [metadata],
+        metadatas: [metadata as Record<string, string | number | boolean>],
       });
 
       logger.debug('Memory updated', { id });

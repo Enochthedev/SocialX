@@ -51,7 +51,7 @@ class AgentService {
       );
 
       if (result.rows.length > 0) {
-        const traits = result.rows.map(row =>
+        const traits = result.rows.map((row: { trait_name: string; trait_value: unknown }) =>
           `${row.trait_name}: ${JSON.stringify(row.trait_value)}`
         ).join(', ');
 
@@ -78,8 +78,12 @@ class AgentService {
         return;
       }
 
+      // Adjust tweet count based on free tier mode
+      const tweetCount = config.twitter.freeTier ? 10 : 100;
+      agentLogger.info(`Fetching ${tweetCount} tweets for analysis (free tier: ${config.twitter.freeTier})`);
+
       // Fetch user's recent tweets
-      const tweets = await twitterClient.getUserTweets(user.id, 100);
+      const tweets = await twitterClient.getUserTweets(user.id, tweetCount);
 
       agentLogger.info(`Analyzing ${tweets.length} tweets for learning`);
 
@@ -132,8 +136,8 @@ class AgentService {
     }
   }
 
-  async generateTweet(): Promise<string | null> {
-    if (!config.behavior.autoTweet) {
+  async generateTweet(forceGenerate: boolean = false): Promise<string | null> {
+    if (!config.behavior.autoTweet && !forceGenerate) {
       return null;
     }
 
@@ -148,12 +152,17 @@ class AgentService {
          LIMIT 5`
       );
 
-      const topics = topicsResult.rows.map(r => r.topic_name);
+      const topics = topicsResult.rows.map((r: { topic_name: string }) => r.topic_name);
       const topicsContext = topics.length > 0 ? `Recent topics: ${topics.join(', ')}` : '';
 
-      // Get recent memories
-      const recentMemories = await vectorDBService.searchSimilar('recent thoughts and ideas', 3);
-      const memoryContext = recentMemories.map(m => m.content).join(' ');
+      // Get recent memories (handle case where vector DB is empty)
+      let memoryContext = '';
+      try {
+        const recentMemories = await vectorDBService.searchSimilar('recent thoughts and ideas', 3);
+        memoryContext = recentMemories.map(m => m.content).join(' ');
+      } catch (error) {
+        agentLogger.debug('No memories found in vector DB, continuing without memory context');
+      }
 
       const context = `${topicsContext}\n${memoryContext}\nPersonality: ${this.personality}`;
 
@@ -341,7 +350,7 @@ class AgentService {
         return '';
       }
 
-      return result.rows.map(r => r.text).join('\n');
+      return result.rows.map((r: { text: string }) => r.text).join('\n');
     } catch (error) {
       agentLogger.error('Failed to get conversation context', { error });
       return '';

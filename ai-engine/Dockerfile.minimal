@@ -10,30 +10,15 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements
-COPY requirements-base.txt requirements.txt ./
+COPY requirements-base.txt ./
 
 # Set pip configuration for better timeout handling
 ENV PIP_DEFAULT_TIMEOUT=1000 \
     PIP_RETRIES=10 \
     PIP_NO_CACHE_DIR=1
 
-# Install base dependencies first (no torch)
+# Install only base dependencies (no ML packages)
 RUN pip install -r requirements-base.txt
-
-# Install PyTorch CPU-only version (smaller and faster)
-RUN pip install torch==2.1.1 torchvision==0.16.1 --index-url https://download.pytorch.org/whl/cpu
-
-# Install torch-dependent packages one by one
-RUN pip install chromadb==0.4.18
-RUN pip install transformers==4.35.2
-RUN pip install sentence-transformers==2.2.2
-RUN pip install spacy==3.7.2
-
-# Download spaCy model
-RUN python -m spacy download en_core_web_sm
-
-# Download NLTK data
-RUN python -c "import nltk; nltk.download('vader_lexicon'); nltk.download('punkt'); nltk.download('stopwords')"
 
 # Copy application code
 COPY . .

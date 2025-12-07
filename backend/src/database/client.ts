@@ -18,7 +18,7 @@ class DatabaseClient {
       connectionTimeoutMillis: 2000,
     });
 
-    this.pool.on('error', (err) => {
+    this.pool.on('error', (err: Error) => {
       dbLogger.error('Unexpected database pool error', { error: err });
     });
 

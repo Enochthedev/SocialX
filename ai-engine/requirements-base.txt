@@ -7,24 +7,20 @@ python-dotenv==1.0.0
 # Database
 psycopg2-binary==2.9.9
 sqlalchemy==2.0.23
-chromadb==0.4.18
 
 # Redis
 redis==5.0.1
 
-# AI/ML
+# AI/ML (without torch-dependent packages)
 openai==1.3.7
 anthropic==0.7.7
 tiktoken==0.5.2
-transformers==4.35.2
-sentence-transformers==2.3.1
 scikit-learn==1.3.2
 numpy==1.26.2
 pandas==2.1.4
 
-# NLP
+# NLP (without torch-dependent packages)
 nltk==3.8.1
-spacy==3.7.2
 textblob==0.17.1
 
 # Analysis

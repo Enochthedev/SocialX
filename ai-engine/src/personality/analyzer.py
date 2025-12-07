@@ -133,7 +133,8 @@ class PersonalityAnalyzer:
 
         for trait, indicators in self.TRAIT_INDICATORS.items():
             score = self._calculate_trait_score(trait, indicators, all_features)
-            personality[trait] = score
+            # Convert numpy types to Python native types for JSON serialization
+            personality[trait] = float(score)
 
         logger.info(f"Personality analysis complete: {personality}")
         return personality
@@ -255,10 +256,10 @@ class PersonalityAnalyzer:
             metrics["exclamation_frequency"] += text.count("!")
 
         return {
-            "avg_tweet_length": round(np.mean(metrics["avg_length"]), 1),
-            "avg_words": round(np.mean(metrics["avg_words_per_tweet"]), 1),
-            "uses_punctuation": np.mean(metrics["punctuation_usage"]) > 2,
-            "uses_emojis": np.mean(metrics["emoji_usage"]) > 0.5,
-            "asks_questions": metrics["question_frequency"] / len(texts) > 0.1,
-            "enthusiastic": metrics["exclamation_frequency"] / len(texts) > 0.2,
+            "avg_tweet_length": float(round(np.mean(metrics["avg_length"]), 1)),
+            "avg_words": float(round(np.mean(metrics["avg_words_per_tweet"]), 1)),
+            "uses_punctuation": bool(np.mean(metrics["punctuation_usage"]) > 2),
+            "uses_emojis": bool(np.mean(metrics["emoji_usage"]) > 0.5),
+            "asks_questions": bool(metrics["question_frequency"] / len(texts) > 0.1),
+            "enthusiastic": bool(metrics["exclamation_frequency"] / len(texts) > 0.2),
         }

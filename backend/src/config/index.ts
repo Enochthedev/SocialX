@@ -1,7 +1,28 @@
 import dotenv from 'dotenv';
 import { z } from 'zod';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-dotenv.config();
+// Load .env from project root
+// Try multiple paths to ensure we find it
+const envPaths = [
+  path.join(process.cwd(), '../.env'),
+  path.join(process.cwd(), '.env'),
+  path.join(__dirname, '../../.env'),
+];
+
+let envLoaded = false;
+for (const envPath of envPaths) {
+  const result = dotenv.config({ path: envPath });
+  if (!result.error) {
+    envLoaded = true;
+    break;
+  }
+}
+
+if (!envLoaded) {
+  console.warn('Warning: Could not load .env file from any expected location');
+}
 
 const configSchema = z.object({
   // OpenRouter
@@ -18,6 +39,7 @@ const configSchema = z.object({
     accessToken: z.string().min(1, 'Twitter access token is required'),
     accessSecret: z.string().min(1, 'Twitter access secret is required'),
     bearerToken: z.string().min(1, 'Twitter bearer token is required'),
+    freeTier: z.boolean().default(false),
   }),
 
   // Database
@@ -134,6 +156,7 @@ function loadConfig(): Config {
       accessToken: process.env.TWITTER_ACCESS_TOKEN || '',
       accessSecret: process.env.TWITTER_ACCESS_SECRET || '',
       bearerToken: process.env.TWITTER_BEARER_TOKEN || '',
+      freeTier: process.env.TWITTER_FREE_TIER === 'true',
     },
     database: {
       host: process.env.POSTGRES_HOST,
